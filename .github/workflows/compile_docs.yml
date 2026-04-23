@@ -1,5 +1,6 @@
 name: Build Docs
 on:
+  workflow_dispatch: # allow manual triggering
   push:
     branches:
       - master
@@ -15,6 +16,7 @@ on:
       - 'lv_conf_template.h'
       - 'lv_version.h'
       - 'lvgl.h'
+      - '.github/workflows/compile_docs.yml'
 
 # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
 # Ensure that only one commit will be running tests at a time on each PR
@@ -83,8 +85,8 @@ jobs:
         run: |
             npx doxymark \
                --input docs/doxygen/xml \
-               --output docs/api \
-               --index docs/api-index.json \
+               --output docs/src/api \
+               --index docs/src/api-index.json \
                --preset fumadocs \
                --auto-group \
                --source-url https://github.com/lvgl/lvgl/tree/${{ github.sha }}/src 
@@ -103,7 +105,7 @@ jobs:
         run: |
             npx -p @lvgl/examples-generator lvgl-examples-gen \
             --src examples \
-            --out docs/examples
+            --out docs/src/examples
 
       - name: Retrieve version
         id: version
