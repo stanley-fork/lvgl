@@ -109,7 +109,7 @@ lv_color_t lv_theme_get_color_secondary(lv_obj_t * obj);
 
 /**
  * Delete a theme
- * @param   theme the theme to destroy
+ * @param   theme the theme to destroy @nullable
  */
 void lv_theme_delete(lv_theme_t * theme);
 
@@ -122,11 +122,11 @@ void lv_theme_delete(lv_theme_t * theme);
  * the associated resources.
  *
  * @param theme      Pointer to theme which callback should be set
- * @param data       User-defined data pointer to associate with the theme
+ * @param user_data  User-defined data pointer to associate with the theme @nullable
  * @param free_cb    Callback function for cleaning up ext_data when theme is deleted.
- *                   Receives ext_data as parameter. NULL means no cleanup required.
+ *                   Receives user_data as parameter. NULL means no cleanup required.
  */
-void lv_theme_set_external_data(lv_theme_t * theme, void * data, void (* free_cb)(void * data));
+void lv_theme_set_external_data(lv_theme_t * theme, void * user_data, void (* free_cb)(void * data));
 #endif
 
 /**********************

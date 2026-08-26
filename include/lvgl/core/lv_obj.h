@@ -436,7 +436,7 @@ void lv_obj_set_state(lv_obj_t * obj, lv_state_t state, bool v);
 /**
  * Set the user_data field of the object
  * @param obj   pointer to an object
- * @param user_data   pointer to the new user_data.
+ * @param user_data   pointer to the new user_data. @nullable
  */
 void lv_obj_set_user_data(lv_obj_t * obj, void * user_data);
 
@@ -719,7 +719,7 @@ void lv_obj_null_on_delete(lv_obj_t ** obj_ptr);
  *
  * @param obj       Pointer to the LVGL object to attach the delete callback to.
  * @param cb        The delete callback function to register.
- * @param user_data     User data pointer passed to `cb` when the object is deleted.
+ * @param user_data     User data pointer passed to `cb` when the object is deleted. @nullable
  *
  * @return      Pointer to the delete descriptor or NULL if the operation failed.
  */
@@ -730,7 +730,7 @@ lv_delete_dsc_t * lv_obj_add_delete_cb(lv_obj_t * obj, lv_delete_cb_t cb, void *
  *
  * Removes a delete descriptor previously created via @ref lv_obj_add_delete_cb
  *
- * @param dsc   Pointer to the delete descriptor. Passing NULL results in a no-op
+ * @param dsc   Pointer to the delete descriptor. Passing NULL results in a no-op @nullable
  */
 void lv_obj_remove_delete_cb(lv_delete_dsc_t * dsc);
 
