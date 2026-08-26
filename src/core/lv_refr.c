@@ -509,6 +509,9 @@ void lv_obj_refr(lv_layer_t * layer, lv_obj_t * obj)
     const lv_opa_t opa_layered = lv_obj_get_style_opa_layered(obj, LV_PART_MAIN);
     if(opa_layered <= LV_OPA_MIN) return;
 
+    if(lv_obj_get_style_transform_scale_x(obj, LV_PART_MAIN) <= 0) return;
+    if(lv_obj_get_style_transform_scale_y(obj, LV_PART_MAIN) <= 0) return;
+
     const lv_opa_t layer_opa_ori = layer->opa;
     const lv_color32_t layer_recolor = layer->recolor;
 
@@ -754,7 +757,7 @@ static void refr_sync_areas(void)
         if(lv_display_get_matrix_rotation(disp_refr)) {
             lv_display_rotate_area(disp_refr, sync_area);
         }
-#endif
+#endif /* LV_DRAW_TRANSFORM_USE_MATRIX */
         /*Call sync callback (if set)*/
         if(disp_refr->sync_cb) {
             /*Set syncing flags*/
@@ -900,7 +903,8 @@ static void refr_area(const lv_area_t * area_p, int32_t y_offset)
         /*In direct mode and full mode the buffer area is always the whole screen, not considering rotation*/
         layer->buf_area.x1 = 0;
         layer->buf_area.y1 = 0;
-        if(lv_display_get_matrix_rotation(disp_refr)) {
+
+        if(LV_DRAW_TRANSFORM_USE_MATRIX && lv_display_get_matrix_rotation(disp_refr)) {
             layer->buf_area.x2 = lv_display_get_original_horizontal_resolution(disp_refr) - 1;
             layer->buf_area.y2 = lv_display_get_original_vertical_resolution(disp_refr) - 1;
         }
@@ -969,18 +973,7 @@ static void refr_area(const lv_area_t * area_p, int32_t y_offset)
                 lv_draw_dispatch_wait_for_request();
                 lv_draw_dispatch();
             }
-
-            lv_layer_t * layer_i = disp_refr->layer_head;
-            while(layer_i) {
-                if(layer_i->next == tile_layer) {
-                    layer_i->next = tile_layer->next;
-                    break;
-                }
-                layer_i = layer_i->next;
-            }
-
-            lv_draw_unit_send_event(NULL, LV_EVENT_CHILD_DELETED, tile_layer);
-            if(disp_refr->layer_deinit) disp_refr->layer_deinit(disp_refr, tile_layer);
+            lv_draw_layer_deinit(tile_layer);
         }
         lv_free(tile_layers);
 
@@ -1274,10 +1267,8 @@ static bool obj_get_matrix(lv_obj_t * obj, lv_matrix_t * matrix)
     int32_t skew_x = lv_obj_get_style_transform_skew_x(obj, LV_PART_MAIN);
     int32_t skew_y = lv_obj_get_style_transform_skew_y(obj, LV_PART_MAIN);
 
-    if(scale_x <= 0 || scale_y <= 0) {
-        /* NOT draw if scale is negative or zero */
-        return false;
-    }
+    /* Checked by caller */
+    LV_ASSERT(scale_x > 0 && scale_y > 0);
 
     /* generate the obj matrix */
     lv_matrix_translate(matrix, pivot.x, pivot.y);
@@ -1428,6 +1419,9 @@ static void draw_buf_flush(lv_display_t * disp)
         lv_draw_dispatch_wait_for_request();
         lv_draw_dispatch();
     }
+
+    /* Every layer must've been drawn*/
+    LV_ASSERT_MSG(layer->next == NULL, "Expected every layer to have been drawn at this point");
 
     /* In double buffered mode wait until the other buffer is freed
      * and driver is ready to receive the new buffer.

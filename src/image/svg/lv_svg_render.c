@@ -15,6 +15,7 @@
 #include <string.h>
 #include "lv_svg_render.h"
 #include "../../misc/lv_array.h"
+#include "../../font/lv_font_private.h"
 
 #if LV_USE_FREETYPE
     #include "../../font/freetype/lv_freetype_private.h"
@@ -1646,8 +1647,8 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_draw_vector_dsc_t *
                         continue;
                     }
                     lv_font_glyph_dsc_t g;
-                    lv_font_get_glyph_dsc(text->font, &g, content->letters[j], '\0');
-                    lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap(&g, NULL);
+                    lv_font_get_glyph_dsc_internal(text->font, &g, content->letters[j], '\0');
+                    lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap_internal(&g, NULL);
                     lv_vector_path_clear(glyph_path);
                     lv_vector_path_copy(glyph_path, p);
                     uint32_t letter_w = g.box_w > 0 ? g.box_w : g.adv_w;
@@ -1715,8 +1716,8 @@ static void _render_span(const lv_svg_render_content_t * content, lv_draw_vector
                 continue;
             }
             lv_font_glyph_dsc_t g;
-            lv_font_get_glyph_dsc(span->font, &g, content->letters[j], '\0');
-            lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap(&g, NULL);
+            lv_font_get_glyph_dsc_internal(span->font, &g, content->letters[j], '\0');
+            lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap_internal(&g, NULL);
             lv_vector_path_clear(glyph_path);
             lv_vector_path_copy(glyph_path, p);
             uint32_t letter_w = g.box_w > 0 ? g.box_w : g.adv_w;
@@ -2581,9 +2582,8 @@ void lv_draw_svg_render(lv_draw_vector_dsc_t * dsc, const lv_svg_render_obj_t * 
 
 void lv_draw_svg(lv_layer_t * layer, const lv_svg_node_t * svg_doc)
 {
-    if(!svg_doc) {
-        return;
-    }
+    LV_CHECK_ARG(layer != NULL, return);
+    LV_CHECK_ARG(svg_doc != NULL, return);
 
     lv_draw_vector_dsc_t * dsc = lv_draw_vector_dsc_create(layer);
     lv_svg_render_obj_t * list = lv_svg_render_create(svg_doc);
