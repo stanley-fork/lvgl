@@ -23,6 +23,7 @@ extern "C" {
 #include <sys/poll.h>
 #include <wayland-client-protocol.h>
 #include <wayland_xdg_shell.h>
+#include <wayland_xdg_output.h>
 #include "lv_wayland_backend_private.h"
 
 /*********************
@@ -30,7 +31,10 @@ extern "C" {
  *********************/
 
 #define LV_WAYLAND_DEFAULT_CURSOR_NAME "left_ptr"
-#define LV_WAYLAND_MAX_OUTPUTS 8
+
+#ifndef LV_WAYLAND_KEY_EVENT_MAX_COUNT
+#define LV_WAYLAND_KEY_EVENT_MAX_COUNT (64)
+#endif
 
 /**********************
  *      TYPEDEFS
@@ -68,9 +72,13 @@ typedef struct {
     struct xkb_keymap * xkb_keymap;
     struct xkb_state * xkb_state;
 
-    lv_key_t key;
-    lv_indev_state_t state;
-    bool is_pressed;
+    struct {
+        lv_key_t key;
+        lv_indev_state_t state;
+    } events[LV_WAYLAND_KEY_EVENT_MAX_COUNT];
+    uint8_t event_read_index;
+    uint8_t event_write_index;
+    uint8_t event_count;
 } lv_wl_seat_keyboard_t;
 
 
@@ -86,9 +94,20 @@ typedef struct {
 
 typedef struct {
     struct wl_output * wl_output;
+    struct zxdg_output_v1 * xdg_output;
+
+    /* Connector name, e.g. "HDMI-A-1". Reported by wl_output since version 4,
+     * or by xdg-output on older compositors. Empty if neither is available */
     char name[64];
+
+    /* Resolution of the current mode, in physical pixels */
     int width;
     int height;
+
+    /* Size in the compositor's global space, 0 if xdg-output is unavailable */
+    int logical_width;
+    int logical_height;
+
     int refresh;
     int scale;
     int flags;
@@ -102,10 +121,11 @@ typedef struct {
     lv_wl_seat_t seat;
 
     void * backend_data;
-    lv_wl_output_info_t physical_outputs[LV_WAYLAND_MAX_OUTPUTS];
+    lv_wl_output_info_t ** physical_outputs;
     uint8_t wl_output_count;
 
     struct xdg_wm_base * xdg_wm;
+    struct zxdg_output_manager_v1 * xdg_output_mgr;
 
     lv_ll_t window_ll;
     lv_timer_t * read_compositor_events_timer;
